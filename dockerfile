@@ -14,10 +14,10 @@ WORKDIR /opt/optcg
 ARG PRIVATE_URL
 
 # Download, extract, and make the binary executable
-RUN wget -O optcg.zip "$PRIVATE_URL" && \
-    unzip optcg.zip && \
+RUN wget -O 1.33a_Linux.zip "$PRIVATE_URL" && \
+    unzip 1.33a_Linux.zip && \
     chmod +x OPTCGSim.x86_64 && \
-    rm optcg.zip
+    rm 1.33a_Linux.zip
 
 # Startup script
 COPY start_optcg.sh /usr/local/bin/start_optcg.sh
