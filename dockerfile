@@ -14,10 +14,19 @@ WORKDIR /opt/optcg
 ARG PRIVATE_URL
 
 # Download, extract, and make the binary executable
-RUN wget -O 1.30d_Linux.zip "$PRIVATE_URL" && \
-    unzip 1.30d_Linux.zip && \
-    chmod +x OPTCGSim.x86_64 && \
-    rm 1.30d_Linux.zip
+# Robust direct download + sanity checks + resilient chmod
+RUN apt-get update && apt-get install -y wget unzip ca-certificates && \
+    wget -L --quiet --show-progress --https-only --retry-connrefused --waitretry=1 -t 5 \
+      -O /tmp/optcg.zip "$PRIVATE_URL" && \
+    # sanity check size (>100KB)
+    test $(stat -c%s /tmp/optcg.zip) -gt 100000 || (echo "Downloaded file too small; check PRIVATE_URL" && exit 2) && \
+    unzip -o /tmp/optcg.zip -d /opt/optcg && \
+    # handle possible folder names and binary names
+    BIN_PATH=$(find /opt/optcg -type f -name "*OPTCG*Sim*.x86_64" | head -n 1) && \
+    test -n "$BIN_PATH" || (echo "OPTCG binary not found after unzip" && exit 3) && \
+    chmod +x "$BIN_PATH" && \
+    ln -sf "$BIN_PATH" /opt/optcg/OPTCGSim.x86_64 && \
+    rm -f /tmp/optcg.zip
 
 # Startup script
 COPY start_optcg.sh /usr/local/bin/start_optcg.sh
